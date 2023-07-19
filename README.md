@@ -1,8 +1,8 @@
-# fusd-token
+# force-token
 
 ```
-git clone https://github.com/merchantry/fusd-token.git
-cd fusd-token
+git clone https://github.com/merchantry/force-token.git
+cd force-token
 npm install
 npm run test
 ```
