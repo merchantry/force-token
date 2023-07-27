@@ -1,6 +1,13 @@
 const path = require('path');
 const fs = require('fs');
 
+const FILE_VERSION_TO_COMPILER = {
+  '0.5.16': '0.5.16+commit.9c3226ce',
+  '0.6.6': '0.6.6+commit.6c089d02',
+};
+
+const DEVELOPMENT_VERSION = '0.8.19';
+
 function getAllFilesInFolder(folderPath) {
   const files = [];
 
@@ -24,6 +31,60 @@ function getAllFilesInFolder(folderPath) {
   return files;
 }
 
+function getSolidityVersion(source) {
+  const solidityVersion = source.match(/pragma solidity (.+?);/);
+
+  if (!solidityVersion) {
+    throw new Error('Solidity version not found');
+  }
+
+  return solidityVersion[1];
+}
+
+function solidityVersionCompare(a, b) {
+  const aParts = a.split('.');
+  const bParts = b.split('.');
+
+  for (let i = 0; i < aParts.length; i++) {
+    if (Number(aParts[i]) > Number(bParts[i])) {
+      return 1;
+    } else if (Number(aParts[i]) < Number(bParts[i])) {
+      return -1;
+    }
+  }
+
+  return 0;
+}
+
+function solidityVersionLessThan(a, b) {
+  return solidityVersionCompare(a, b) < 0;
+}
+
+function solidityVersionEqual(a, b) {
+  return solidityVersionCompare(a, b) === 0;
+}
+
+function createInputData(additionalData) {
+  return {
+    language: 'Solidity',
+    sources: {},
+    settings: {
+      outputSelection: {
+        '*': {
+          '*': ['*'],
+        },
+      },
+    },
+    ...additionalData,
+  };
+}
+
 module.exports = {
+  FILE_VERSION_TO_COMPILER,
+  DEVELOPMENT_VERSION,
   getAllFilesInFolder,
+  getSolidityVersion,
+  solidityVersionLessThan,
+  solidityVersionEqual,
+  createInputData,
 };

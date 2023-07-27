@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.10;
+pragma solidity ^0.8.19;
 
 abstract contract Debugger {
     event LogUint(string message, uint256 num, address sender);

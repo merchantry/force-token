@@ -1,6 +1,4 @@
 const Web3 = require('web3');
-const contracts = require('../compile');
-const { useMethodOn } = require('../utils/contracts');
 const { schedule, everyMinute } = require('../utils/cronJob');
 
 const PROVIDER = process.argv[2] || undefined;
