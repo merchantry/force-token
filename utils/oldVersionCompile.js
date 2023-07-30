@@ -10,13 +10,13 @@ const {
 } = require('./compile');
 const { formatCompileErrors } = require('./debug');
 
-const contractsToFetch = {
-  UniswapV2Factory: undefined,
-  UniswapV2Router02: undefined,
-  UniswapV2Pair: 'UniswapV2Factory',
-};
+// const contractsToFetch = {
+//   UniswapV2Factory: undefined,
+//   UniswapV2Router02: undefined,
+//   UniswapV2Pair: 'UniswapV2Factory',
+// };
 
-async function getCompiledContracts() {
+async function getContracts() {
   return Object.entries(FILE_VERSION_TO_COMPILER).reduce(
     async (acc, [fileVersion, compilerVersion]) => {
       const contractsFolderPath = path.resolve(__dirname, '..', 'contracts');
@@ -62,16 +62,6 @@ async function getCompiledContracts() {
     },
     {}
   );
-}
-
-async function getContracts() {
-  const oldVersionContracts = await getCompiledContracts();
-
-  return Object.entries(contractsToFetch).reduce((acc, [contract, file]) => {
-    const fileName = !file ? contract : file;
-    acc[contract] = oldVersionContracts[`uniswap/${fileName}.sol`][contract];
-    return acc;
-  }, {});
 }
 
 module.exports = getContracts;

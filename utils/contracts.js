@@ -86,9 +86,16 @@ const getBalanceOfUser = async (TokenContract, account) => {
   return parseInt(balance);
 };
 
+const compiledContractMap = (contracts) => (contractFileAndName) => {
+  const [contractFile, _contractName] = contractFileAndName.split(':');
+  const contractName = _contractName ?? contractFile.match(/(\w+)\.sol/)[1];
+  return contracts[contractFile][contractName];
+};
+
 module.exports = {
   useMethodsOn,
   useMethodOn,
   getContractEvents,
   getBalanceOfUser,
+  compiledContractMap,
 };

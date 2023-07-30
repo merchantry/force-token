@@ -39,11 +39,14 @@ abstract contract RecordingDeposits is StoringDepositOptions, TimeHandler {
         return deposits[deposits.length - 1];
     }
 
-    function getDeposit(uint256 index) internal view returns (Deposit storage) {
+    function _getDeposit(uint256 index) internal view returns (Deposit storage) {
         return deposits[index];
     }
 
-    function getDepositData(uint256 index) public view returns (Deposit memory) {
+    /**
+     * @dev Returns the deposit at the given index.
+     */
+    function getDeposit(uint256 index) public view returns (Deposit memory) {
         return deposits[index];
     }
 
@@ -55,7 +58,7 @@ abstract contract RecordingDeposits is StoringDepositOptions, TimeHandler {
         uint256 endTime = Math.min(userDeposit.depositedAt + lockPeriod, currentTime);
         uint256 timePassed = endTime - userDeposit.depositedAt;
 
-        return (timePassed * numOfPurchases) / lockPeriod - userDeposit.purchasesMade;
+        return Math.divideRoundUp((timePassed * numOfPurchases), lockPeriod) - userDeposit.purchasesMade;
     }
 
     function incrementPurchasesMade(Deposit storage userDeposit, uint256 amount) internal {
@@ -66,10 +69,17 @@ abstract contract RecordingDeposits is StoringDepositOptions, TimeHandler {
         require(userDeposit.purchasesMade <= numOfPurchases, "All numOfPurchases already distributed");
     }
 
+    /**
+     * @dev Returns all deposits.
+     */
     function getAllDeposits() public view returns (Deposit[] memory) {
         return deposits;
     }
 
+    /**
+     * @dev Returns all deposits made by the given user.
+     * @param user The address of the user.
+     */
     function getAllUserDeposits(address user) public view returns (Deposit[] memory) {
         uint256[] storage userDepositIndexes = userDeposits[user];
         Deposit[] memory userDepositsArray = new Deposit[](userDepositIndexes.length);
@@ -81,7 +91,7 @@ abstract contract RecordingDeposits is StoringDepositOptions, TimeHandler {
         return userDepositsArray;
     }
 
-    function getAllDepositsAndAvailablePurchases() internal view returns (Deposit[] storage, uint256[] memory) {
+    function _getAllDepositsAndAvailablePurchases() internal view returns (Deposit[] storage, uint256[] memory) {
         uint256[] memory availablePurchases = new uint256[](deposits.length);
 
         uint256 currentTime = time();
@@ -93,13 +103,10 @@ abstract contract RecordingDeposits is StoringDepositOptions, TimeHandler {
         return (deposits, availablePurchases);
     }
 
-    function purchasesAreAvailable() public view returns (bool) {
-        (, uint256[] memory availablePurchases) = getAllDepositsAndAvailablePurchases();
-
-        for (uint256 i = 0; i < availablePurchases.length; i++) {
-            if (availablePurchases[i] > 0) return true;
-        }
-
-        return false;
+    /**
+     * @dev Returns all deposits and the calculated available purchases from each deposit.
+     */
+    function getAllDepositsAndAvailablePurchases() public view returns (Deposit[] memory, uint256[] memory) {
+        return _getAllDepositsAndAvailablePurchases();
     }
 }

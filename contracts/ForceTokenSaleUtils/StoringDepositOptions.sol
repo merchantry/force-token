@@ -21,12 +21,18 @@ abstract contract StoringDepositOptions {
         _;
     }
 
-    function getOption(uint256 option) public view validOption(option) returns (uint256, uint256, uint256) {
-        Option memory _option = options[option];
+    /**
+     * @dev Returns the option at the given index.
+     */
+    function getOption(uint256 index) public view validOption(index) returns (uint256, uint256, uint256) {
+        Option memory _option = options[index];
 
         return (_option.lockPeriod, _option.numOfPurchases, _option.rewardBonusInTenthPerc);
     }
 
+    /**
+     * @dev Returns all options.
+     */
     function getOptions() public view returns (Option[] memory) {
         return options;
     }
