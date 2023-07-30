@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "./DEXAdapterInterface.sol";
-import "../ForceTokenSaleUtils/TimeHandler.sol";
-import "../uniswap/IUniswapV2Router02.sol";
-import "../openzeppelin/token/ERC20/IERC20.sol";
+import "./DEXAdapterHandlerUtils/DEXAdapterInterface.sol";
+import "./ForceTokenSaleUtils/TimeHandler.sol";
+import "./uniswap/IUniswapV2Router02.sol";
+import "./openzeppelin/token/ERC20/IERC20.sol";
 
 contract UniswapV2DEXAdapter is DEXAdapterInterface, TimeHandler {
     IUniswapV2Router02 private uniswapRouter;

@@ -80,7 +80,7 @@ describe('ForceTokenSale tests', () => {
       accounts[0]
     );
     UniswapV2DEXAdapter = await deploy(
-      getContract('DEXAdapterHandlerUtils/UniswapV2DEXAdapter.sol'),
+      getContract('UniswapV2DEXAdapter.sol'),
       [UniswapV2Router02.options.address],
       accounts[0]
     );
@@ -589,7 +589,7 @@ describe('ForceTokenSale tests', () => {
 
     it('allows owner to update DEXAdapter', async () => {
       const DexAdapterCopy = await deploy(
-        getContract('DEXAdapterHandlerUtils/UniswapV2DEXAdapter.sol'),
+        getContract('UniswapV2DEXAdapter.sol'),
         [UniswapV2Router02.options.address],
         accounts[0]
       );

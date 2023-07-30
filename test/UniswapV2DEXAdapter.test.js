@@ -41,7 +41,7 @@ describe('UniswapV2DEXAdapter tests', () => {
       accounts[0]
     );
     UniswapV2DEXAdapter = await deploy(
-      getContract('DEXAdapterHandlerUtils/UniswapV2DEXAdapter.sol'),
+      getContract('UniswapV2DEXAdapter.sol'),
       [UniswapV2Router02.options.address],
       accounts[0]
     );
