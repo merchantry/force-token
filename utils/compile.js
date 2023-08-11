@@ -4,6 +4,7 @@ const fs = require('fs');
 const FILE_VERSION_TO_COMPILER = {
   '0.5.16': '0.5.16+commit.9c3226ce',
   '0.6.6': '0.6.6+commit.6c089d02',
+  '0.7.6': '0.7.6+commit.7338295f',
 };
 
 const DEVELOPMENT_VERSION = '0.8.19';
@@ -56,10 +57,6 @@ function solidityVersionCompare(a, b) {
   return 0;
 }
 
-function solidityVersionLessThan(a, b) {
-  return solidityVersionCompare(a, b) < 0;
-}
-
 function solidityVersionEqual(a, b) {
   return solidityVersionCompare(a, b) === 0;
 }
@@ -79,12 +76,41 @@ function createInputData(additionalData) {
   };
 }
 
+function formatCompileErrors(compiledInfo) {
+  return compiledInfo.errors.map(({ formattedMessage }) => formattedMessage);
+}
+
+function getAllContractFiles(contractsPath, fileVersion = undefined) {
+  return getAllFilesInFolder(contractsPath).reduce((acc, file) => {
+    const fileName = path.relative(contractsPath, file).replace(/\\/g, '/');
+    const source = fs.readFileSync(file, 'utf8');
+    const solidityVersion = getSolidityVersion(source);
+
+    if (!fileVersion || solidityVersionEqual(solidityVersion, fileVersion)) {
+      acc[fileName] = {
+        content: source,
+      };
+    }
+
+    return acc;
+  }, {});
+}
+
+function compileContracts(compiler, input) {
+  const compiledInfo = JSON.parse(compiler.compile(JSON.stringify(input)));
+
+  if (compiledInfo.errors) {
+    console.error(formatCompileErrors(compiledInfo));
+  }
+
+  return compiledInfo.contracts;
+}
+
 module.exports = {
   FILE_VERSION_TO_COMPILER,
   DEVELOPMENT_VERSION,
-  getAllFilesInFolder,
-  getSolidityVersion,
-  solidityVersionLessThan,
   solidityVersionEqual,
   createInputData,
+  getAllContractFiles,
+  compileContracts,
 };

@@ -1,4 +1,8 @@
-const { useMethodOn, useMethodsOn } = require('./contracts');
+const {
+  useMethodOn,
+  useMethodsOn,
+  mintToAndApproveFor,
+} = require('./contracts');
 const { timeInSecs } = require('./helper');
 
 /**
@@ -12,31 +16,19 @@ const addLiquidity = (
   amount2,
   account
 ) =>
-  useMethodsOn(Token1, [
-    {
-      method: 'mint',
-      args: [account, amount1],
-      account,
-    },
-    {
-      method: 'approve',
-      args: [UniswapV2Router02.options.address, amount1],
-      account,
-    },
-  ])
+  mintToAndApproveFor(
+    Token1,
+    account,
+    amount1,
+    UniswapV2Router02.options.address
+  )
     .then(() =>
-      useMethodsOn(Token2, [
-        {
-          method: 'mint',
-          args: [account, amount2],
-          account,
-        },
-        {
-          method: 'approve',
-          args: [UniswapV2Router02.options.address, amount2],
-          account,
-        },
-      ])
+      mintToAndApproveFor(
+        Token2,
+        account,
+        amount2,
+        UniswapV2Router02.options.address
+      )
     )
     .then(() =>
       useMethodOn(UniswapV2Router02, {

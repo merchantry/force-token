@@ -12,7 +12,7 @@ const {
   randomInt,
   runPromisesInSequence,
 } = require('../utils/helper');
-const getContracts = require('../utils/oldVersionCompile');
+const oldVersionCompiler = require('../utils/OldVersionCompiler');
 const { month, year, day } = require('../utils/timePeriods');
 const { addLiquidity } = require('../utils/uniswap');
 
@@ -63,7 +63,7 @@ describe('ForceTokenSale tests', () => {
     UniswapV2Router02;
 
   before(async () => {
-    getOldVersionContract = compiledContractMap(await getContracts());
+    getOldVersionContract = compiledContractMap(await oldVersionCompiler.get());
   });
 
   beforeEach(async () => {
