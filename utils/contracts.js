@@ -42,7 +42,6 @@ const useMethodsOn = (contractInstance, methods) => {
             .call({ from: account })
             .catch((err) => {
               const reason = err.message.split(': revert ')[1];
-              console.log(err);
 
               if (!catchCallback) {
                 throw new Error(
