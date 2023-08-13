@@ -1,34 +1,21 @@
 const assert = require('assert');
 const contracts = require('../compile');
 const oldVersionCompiler = require('../utils/OldVersionCompiler');
-const {
-  getAccounts,
-  deploy,
-  getDeployedContract,
-} = require('../utils/useWeb3');
+const { getAccounts, deploy } = require('../utils/useWeb3');
 const {
   compiledContractMap,
   useMethodOn,
-  useMethodsOn,
-  mintToAndApproveFor,
+  getContractEvents,
+  getBalanceOfUser,
 } = require('../utils/contracts');
+const { addLiquidity } = require('../utils/algebra');
+const {
+  valuesWithinPercentage,
+  timeInSecs,
+  randomInt,
+} = require('../utils/helper');
 
 const getContract = compiledContractMap(contracts);
-
-const getPriceFromTick = (tick) => 1.0001 ** tick;
-
-const getSqrtRatioAtTick = (tick) => {
-  const price = getPriceFromTick(tick);
-  const sqrtRatioX96 = Math.sqrt(price) * 2 ** 96;
-  return BigInt(Math.floor(sqrtRatioX96));
-};
-
-const getNumDivisibleWith = (num, divisor) => {
-  const sign = num < 0 ? -1n : 1n;
-  const absNum = sign * num;
-  const bigIntDivisor = BigInt(divisor);
-  return sign * (absNum / bigIntDivisor) * bigIntDivisor;
-};
 
 describe('SwapRouter tests', () => {
   let accounts,
@@ -103,103 +90,67 @@ describe('SwapRouter tests', () => {
 
     it('has reference to factory', () =>
       useMethodOn(SwapRouter, {
+        // We get the factory address from the SwapRouter contract
         method: 'factory',
         onReturn: (factory) => {
+          // And check if it matches the address of the factory we deployed
           assert.strictEqual(factory, AlgebraFactory.options.address);
         },
       }));
 
-    it('swaps something', () => {
-      let AlgebraPool;
-      let zeroToOne;
-      const bigNum = 1n * 10n ** 18n;
-      const liquidityDesired = 1n * 10n ** 9n;
-      const token1Amount = bigNum;
-      const token2Amount = bigNum;
-      const q96 = 2n ** 96n;
-      const encodedPrice = q96;
-      const topTick = 6000;
-      const bottomTick = -6000;
-      const tradeAmount = 10000n;
-      const minTick = -887272;
-      const maxTick = -minTick;
-      const currentTick = 60n;
-      const minSqrtRatio = Math.ceil(getSqrtRatioAtTick(minTick) / currentTick) * currentTick;
-      const maxSqrtRatio = Math.floor(getSqrtRatioAtTick(maxTick) / currentTick) * currentTick;
+    it('executes swap', () => {
+      const tradeAmount = randomInt(10000, 100000);
+      const tradeReceiver = accounts[1];
 
-      return useMethodsOn(AlgebraFactory, [
-        {
-          method: 'createPool',
-          args: [ERC20Token1.options.address, ERC20Token2.options.address],
+      return addLiquidity(
+        SwapRouter,
+        AlgebraFactory,
+        TestAlgebraCallee,
+        ERC20Token1,
+        ERC20Token2,
+        getOldVersionContract('algebra/AlgebraPoolDeployer.sol:AlgebraPool'),
+        tradeAmount,
+        accounts[0]
+      ).then(({ zeroToOne, AlgebraPool }) =>
+        useMethodOn(SwapRouter, {
+          // We initiate the swap
+          method: 'exactInputSingle',
+          args: [
+            // We pass the arguments as `ExactInputSingleParams` struct
+            {
+              tokenIn: ERC20Token1.options.address,
+              tokenOut: ERC20Token2.options.address,
+              recipient: tradeReceiver,
+              deadline: timeInSecs() + 1000,
+              amountIn: tradeAmount,
+              amountOutMinimum: 1,
+              limitSqrtPrice: 0,
+            },
+          ],
           account: accounts[0],
-        },
-        {
-          method: 'poolByPair',
-          args: [ERC20Token1.options.address, ERC20Token2.options.address],
-          onReturn: () => {},
-        },
-      ])
-        .then(async (poolAddress) => {
-          AlgebraPool = await getDeployedContract(
-            getOldVersionContract(
-              'algebra/AlgebraPoolDeployer.sol:AlgebraPool'
-            ),
-            poolAddress
-          );
-          const token0 = await useMethodOn(AlgebraPool, {
-            method: 'token0',
-            onReturn: () => {},
-          });
-          zeroToOne = token0 === ERC20Token1.options.address;
+        }).then(async () => {
+          const events = await getContractEvents(AlgebraPool);
+          const swapData = events.find(({ event }) => event === 'Swap').data;
+          // Depending on which token is token0, we check the amount of
+          // token0 or token1 that was swapped
+          const [swapAmountIn, swapAmountOut] = (
+            zeroToOne
+              ? [swapData.amount0, swapData.amount1]
+              : [swapData.amount1, swapData.amount0]
+          ).map((v) => parseInt(v));
+          // We get the balance of the user that received the swap
+          const balance = await getBalanceOfUser(ERC20Token2, tradeReceiver);
+
+          // We check that the amount of token sent to the swap is equal to tradeAmount
+          assert.strictEqual(swapAmountIn, tradeAmount);
+          // We check that the amount of token received from the swap is equal to the balance
+          // of the user that received the swap
+          assert.strictEqual(balance, -swapAmountOut);
+          // We check that the amount of token received from the swap is within 1% of the
+          // amount of token sent to the swap. This is to account for the fees
+          assert.ok(valuesWithinPercentage(-swapAmountOut, tradeAmount, 1));
         })
-        .then(() =>
-          mintToAndApproveFor(
-            ERC20Token1,
-            accounts[0],
-            token1Amount,
-            TestAlgebraCallee.options.address
-          )
-        )
-        .then(() =>
-          mintToAndApproveFor(
-            ERC20Token2,
-            accounts[0],
-            token2Amount,
-            TestAlgebraCallee.options.address
-          )
-        )
-        .then(() =>
-          useMethodOn(AlgebraPool, {
-            method: 'initialize',
-            args: [encodedPrice],
-            account: accounts[0],
-          })
-        )
-        .then(() =>
-          useMethodsOn(TestAlgebraCallee, [
-            {
-              method: 'mint',
-              args: [
-                AlgebraPool.options.address,
-                accounts[0],
-                bottomTick,
-                topTick,
-                liquidityDesired,
-              ],
-              account: accounts[0],
-            },
-            {
-              method: zeroToOne ? 'swapExact0For1' : 'swapExact1For0',
-              args: [
-                AlgebraPool.options.address,
-                tradeAmount,
-                accounts[1],
-                zeroToOne ? minSqrtRatio : maxSqrtRatio,
-              ],
-              account: accounts[0],
-            },
-          ])
-        );
+      );
     });
   });
 
@@ -210,8 +161,10 @@ describe('SwapRouter tests', () => {
 
     it('has reference to pool deployer', () =>
       useMethodOn(AlgebraFactory, {
+        // We get the address of the pool deployer from the factory
         method: 'poolDeployer',
         onReturn: (poolDeployer) => {
+          // And check if it matches the address of the pool deployer we deployed
           assert.strictEqual(poolDeployer, AlgebraPoolDeployer.options.address);
         },
       }));
@@ -221,13 +174,5 @@ describe('SwapRouter tests', () => {
     it('deploys successfully', () => {
       assert.ok(AlgebraPoolDeployer.options.address);
     });
-
-    it('has reference to pool deployer', () =>
-      useMethodOn(AlgebraPoolDeployer, {
-        method: 'parameters',
-        onReturn: (parameters) => {
-          // console.log(parameters);
-        },
-      }));
   });
 });

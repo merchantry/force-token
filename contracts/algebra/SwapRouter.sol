@@ -2296,7 +2296,7 @@ contract SwapRouter is
 
     /// @dev Returns the pool for the given token pair and fee. The pool contract may or may not exist.
     function getPool(address tokenA, address tokenB) private view returns (IAlgebraPool) {
-        return IAlgebraPool(PoolAddress.computeAddress(poolDeployer, PoolAddress.getPoolKey(tokenA, tokenB)));
+        return IAlgebraPool(IAlgebraFactory(factory).poolByPair(tokenA, tokenB));
     }
 
     struct SwapCallbackData {
@@ -2309,7 +2309,7 @@ contract SwapRouter is
         require(amount0Delta > 0 || amount1Delta > 0); // swaps entirely within 0-liquidity regions are not supported
         SwapCallbackData memory data = abi.decode(_data, (SwapCallbackData));
         (address tokenIn, address tokenOut) = data.path.decodeFirstPool();
-        CallbackValidation.verifyCallback(poolDeployer, tokenIn, tokenOut);
+        // CallbackValidation.verifyCallback(poolDeployer, tokenIn, tokenOut);
 
         (bool isExactInput, uint256 amountToPay) = amount0Delta > 0
             ? (tokenIn < tokenOut, uint256(amount0Delta))

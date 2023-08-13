@@ -1,6 +1,5 @@
 const {
   useMethodOn,
-  useMethodsOn,
   mintToAndApproveFor,
 } = require('./contracts');
 const { timeInSecs } = require('./helper');
