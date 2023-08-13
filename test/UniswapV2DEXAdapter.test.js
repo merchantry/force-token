@@ -2,7 +2,7 @@ const assert = require('assert');
 const contracts = require('../compile');
 const { deploy, getAccounts } = require('../utils/useWeb3');
 const { useMethodOn, compiledContractMap } = require('../utils/contracts');
-const getContracts = require('../utils/oldVersionCompile');
+const oldVersionCompiler = require('../utils/OldVersionCompiler');
 const { addLiquidity, calculateOutAmount } = require('../utils/uniswap');
 const { randomInt } = require('../utils/helper');
 
@@ -24,7 +24,7 @@ describe('UniswapV2DEXAdapter tests', () => {
     UniswapV2Router02;
 
   before(async () => {
-    getOldVersionContract = compiledContractMap(await getContracts());
+    getOldVersionContract = compiledContractMap(await oldVersionCompiler.get());
   });
 
   beforeEach(async () => {

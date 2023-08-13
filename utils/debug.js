@@ -1,7 +1,3 @@
-const formatCompileErrors = (compiledInfo) => compiledInfo.errors.map(({
-    formattedMessage
-}) => formattedMessage);
-
 /**
  * Prints all the logs in the contract instance created by the Debugger contract
  * 
@@ -37,7 +33,6 @@ const formatArgs = (args) =>
   )})` : '';
 
 module.exports = {
-    formatCompileErrors,
     printLogs,
     formatArgs
 };

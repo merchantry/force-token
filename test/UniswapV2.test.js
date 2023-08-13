@@ -1,6 +1,6 @@
 const assert = require('assert');
 const contracts = require('../compile');
-const getContracts = require('../utils/oldVersionCompile');
+const oldVersionCompiler = require('../utils/OldVersionCompiler');
 const {
   deploy,
   getAccounts,
@@ -32,7 +32,7 @@ describe('UniswapV2 tests', () => {
     UniswapV2Router02;
 
   before(async () => {
-    getOldVersionContract = compiledContractMap(await getContracts());
+    getOldVersionContract = compiledContractMap(await oldVersionCompiler.get());
   });
 
   beforeEach(async () => {

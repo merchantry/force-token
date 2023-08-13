@@ -25,7 +25,7 @@ const useMethodsOn = (contractInstance, methods) => {
       }
 
       if (then) {
-        then(await previousReturnValue);
+        await then(await previousReturnValue);
         return recursiveFunction(methodIndex + 1, Promise.resolve());
       }
 
@@ -92,10 +92,25 @@ const compiledContractMap = (contracts) => (contractFileAndName) => {
   return contracts[contractFile][contractName];
 };
 
+const mintToAndApproveFor = (TokenContract, account, amount, approve, owner = account) =>
+  useMethodsOn(TokenContract, [
+    {
+      method: 'mint',
+      args: [account, amount],
+      account: owner,
+    },
+    {
+      method: 'approve',
+      args: [approve, amount],
+      account,
+    },
+  ]);
+
 module.exports = {
   useMethodsOn,
   useMethodOn,
   getContractEvents,
   getBalanceOfUser,
   compiledContractMap,
+  mintToAndApproveFor,
 };
